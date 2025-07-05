@@ -729,7 +729,8 @@ require('lazy').setup({
       -- for you, so that they are available from within Neovim.
       local ensure_installed = vim.tbl_keys(servers or {})
       vim.list_extend(ensure_installed, {
-        'stylua', -- Used to format Lua code
+        'stylua',
+        'js-debug-adapter', -- Used to format Lua code
       })
       require('mason-tool-installer').setup { ensure_installed = ensure_installed }
 
@@ -976,6 +977,110 @@ require('lazy').setup({
     --    - Incremental selection: Included, see `:help nvim-treesitter-incremental-selection-mod`
     --    - Show your current context: https://github.com/nvim-treesitter/nvim-treesitter-context
     --    - Treesitter + textobjects: https://github.com/nvim-treesitter/nvim-treesitter-textobjects
+  },
+  -- DAP SETUP
+  {
+    'mfussenegger/nvim-dap',
+    dependencies = {
+      'nvim-neotest/nvim-nio',
+      'rcarriga/nvim-dap-ui',
+      'theHamsta/nvim-dap-virtual-text',
+    },
+    config = function()
+      local dap = require 'dap'
+      local ui = require 'dapui'
+
+      require('dapui').setup()
+
+      require('nvim-dap-virtual-text').setup {
+        display_callback = function(variable)
+          if #variable.value > 15 then
+            return ' ' .. string.sub(variable.value, 1, 15) .. '... '
+          end
+
+          return ' ' .. variable.value
+        end,
+      }
+
+      -- javascript typescript
+      dap.adapters['pwa-node'] = {
+        type = 'server',
+        host = 'localhost',
+        port = 8123,
+        executable = {
+          command = 'js-debug-adapter',
+        },
+      }
+      dap.adapters['pwa-chrome'] = {
+        type = 'server',
+        host = 'localhost',
+        port = '${port}',
+        executable = {
+          command = 'node',
+          args = {
+            (vim.env.MASON or (vim.fn.stdpath 'data' .. '/mason')) .. '/packages/js-debug-adapter/js-debug/src/dapDebugServer.js',
+            '${port}',
+          },
+        },
+      }
+      for _, language in ipairs { 'typescript', 'javascript' } do
+        dap.configurations[language] = {
+          {
+            type = 'pwa-node',
+            request = 'launch',
+            name = 'Launch file',
+            program = '${file}',
+            cwd = '${workspaceFolder}',
+            runtimeExecutable = 'node',
+          },
+          {
+            type = 'pwa-node',
+            request = 'attach',
+            name = 'Attach',
+            processId = require('dap.utils').pick_process,
+            cwd = '${workspaceFolder}',
+            runtimeExecutable = 'node',
+          },
+          {
+            type = 'pwa-chrome',
+            request = 'launch',
+            name = 'Start Chrome with "localhost"',
+            file = '/home/maciej/dev/learnjs/arena/index.html',
+            webRoot = '${workspaceFolder}',
+            userDataDir = '${workspaceFolder}/.vscode/vscode-chrome-debug-userdatadir',
+          },
+        }
+      end
+
+      vim.keymap.set('n', '<space>db', dap.toggle_breakpoint, { desc = '[D]ebug [B]reakpoint set' })
+      vim.keymap.set('n', '<space>dg', dap.run_to_cursor, { desc = '[D]ebug [G]o to cursor' })
+      vim.keymap.set('n', '<space>dc', dap.continue, { desc = '[D]ebug [C]ontinue  cursor' })
+
+      -- Eval var under cursor
+      vim.keymap.set('n', '<space>?', function()
+        require('dapui').eval(nil, { enter = true })
+      end)
+
+      vim.keymap.set('n', '<F1>', dap.continue)
+      vim.keymap.set('n', '<F2>', dap.step_into)
+      vim.keymap.set('n', '<F3>', dap.step_over)
+      vim.keymap.set('n', '<F4>', dap.step_out)
+      vim.keymap.set('n', '<F5>', dap.step_back)
+      vim.keymap.set('n', '<F6>', dap.restart)
+
+      dap.listeners.before.attach.dapui_config = function()
+        ui.open()
+      end
+      dap.listeners.before.launch.dapui_config = function()
+        ui.open()
+      end
+      dap.listeners.before.event_terminated.dapui_config = function()
+        ui.close()
+      end
+      dap.listeners.before.event_exited.dapui_config = function()
+        ui.close()
+      end
+    end,
   },
 
   -- The following comments only work if you have downloaded the kickstart repo, not just copy pasted the
