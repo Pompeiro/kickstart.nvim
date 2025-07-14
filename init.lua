@@ -953,6 +953,38 @@ require('lazy').setup({
       --  Check out: https://github.com/echasnovski/mini.nvim
     end,
   },
+
+  {
+    'tris203/precognition.nvim',
+    --event = "VeryLazy",
+    opts = {
+      -- startVisible = true,
+      -- showBlankVirtLine = true,
+      -- highlightColor = { link = "Comment" },
+      hints = {
+        Caret = { text = '^', prio = 2 },
+        Dollar = { text = '$', prio = 1 },
+        MatchingPair = { text = '%', prio = 5 },
+        Zero = { text = '0', prio = 1 },
+        w = { text = 'w', prio = 10 },
+        b = { text = 'b', prio = 9 },
+        e = { text = 'e', prio = 8 },
+        W = { text = 'W', prio = 7 },
+        B = { text = 'B', prio = 6 },
+        E = { text = 'E', prio = 5 },
+      },
+      gutterHints = {
+        G = { text = 'G', prio = 10 },
+        gg = { text = 'gg', prio = 9 },
+        PrevParagraph = { text = '{', prio = 8 },
+        NextParagraph = { text = '}', prio = 8 },
+      },
+      -- disabled_fts = {
+      --     "startify",
+      -- },
+    },
+  },
+
   { -- Highlight, edit, and navigate code
     'nvim-treesitter/nvim-treesitter',
     build = ':TSUpdate',
@@ -1045,7 +1077,7 @@ require('lazy').setup({
             type = 'pwa-chrome',
             request = 'launch',
             name = 'Start Chrome with "localhost"',
-            file = '/home/maciej/dev/learnjs/arena/index.html',
+            file = '/home/maciej/dev/learnjs/arena/docs/index.html',
             webRoot = '${workspaceFolder}',
             userDataDir = '${workspaceFolder}/.vscode/vscode-chrome-debug-userdatadir',
           },
